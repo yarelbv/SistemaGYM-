@@ -3,8 +3,8 @@
 require_once "config.php";
  
 // Define variables and initialize with empty values
-$username = $password = $confirm_password = "";
-$username_err = $password_err = $confirm_password_err = "";
+$username = $password = $confirm_password = $tipo = $telefono = "";
+$username_err = $password_err = $confirm_password_err = $tipo_err = $telefono_err = "";
  
 // Processing form data when form is submitted
 if($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -157,9 +157,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 $stmt->store_result();
                 
                 if($stmt->num_rows == 1){
-                    $tipo_err = "Número ya existente";
+                    $telefono_err = "Número ya existente";
                 } else{
-                    $tipo = trim($_POST["tipo"]);
+                    $telefono = trim($_POST["tipo"]);
                 }
             } else{
                 echo "Repampanos! Algo salió mal. Por favor, inténtelo de nuevo más tarde.";
