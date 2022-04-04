@@ -3,136 +3,69 @@
 require_once "config.php";
  
 // Define variables and initialize with empty values
-$username = $password = $confirm_password = $tipo = $telefono = "";
-$username_err = $password_err = $confirm_password_err = $tipo_err = $telefono_err = "";
+$username = $tipo = $password = $confirm_password = $telefono = "";
+$username_err = $tipo_err = $password_err = $confirm_password_err = $telefono_err = "";
  
 // Processing form data when form is submitted
 if($_SERVER["REQUEST_METHOD"] == "POST"){
  
     // Validate username
     if(empty(trim($_POST["username"]))){
-        $username_err = "Ingresa tu nombre de usuario.";
+        $username_err = "Please enter a username.";
     } elseif(!preg_match('/^[a-zA-Z0-9_]+$/', trim($_POST["username"]))){
-        $username_err = "El nombre de usuario puede contener letras, números y carácteres.";
+        $username_err = "Username can only contain letters, numbers, and underscores.";
     } else{
         // Prepare a select statement
         $sql = "SELECT id FROM users WHERE username = ?";
         
-        if($stmt = $mysqli->prepare($sql)){
+        if($stmt = mysqli_prepare($link, $sql)){
             // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_username);
+            mysqli_stmt_bind_param($stmt, "s", $param_username);
             
             // Set parameters
             $param_username = trim($_POST["username"]);
             
             // Attempt to execute the prepared statement
-            if($stmt->execute()){
-                // store result
-                $stmt->store_result();
+            if(mysqli_stmt_execute($stmt)){
+                /* store result */
+                mysqli_stmt_store_result($stmt);
                 
-                if($stmt->num_rows == 1){
-                    $username_err = "Este nombre de usuario ya está en uso.";
+                if(mysqli_stmt_num_rows($stmt) == 1){
+                    $username_err = "This username is already taken.";
                 } else{
                     $username = trim($_POST["username"]);
-                }
-            } else{
-                echo "Recorcholis! Algo salió mal. Por favor, inténtelo de nuevo más tarde.";
-            }
-
-            // Close statement
-            $stmt->close();
-        }
-    }
-
-     // Validate username
-     if(empty(trim($_POST["tipo"]))){
-        $tipo_err = "Selecciona tu tipo de usuario(general, estudiante).";
-    } elseif(!preg_match('/^[a-zA-Z0-9_]+$/', trim($_POST["tipo"]))){
-        $tipo_err = "Tu tipo de usuario es general, estudiante.";
-    } else{
-        // Prepare a select statement
-        $sql = "SELECT id FROM users WHERE tipo = ?";
-        
-        if($stmt = $mysqli->prepare($sql)){
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_tipo);
-            
-            // Set parameters
-            $param_tipo = trim($_POST["tipo"]);
-            
-            // Attempt to execute the prepared statement
-            if($stmt->execute()){
-                // store result
-                $stmt->store_result();
-                
-                if($stmt->num_rows == 1){
-                    $tipo_err = "Error al elegir el tipo de usuario";
-                } else{
                     $tipo = trim($_POST["tipo"]);
                 }
             } else{
-                echo "Caracoles! Algo salió mal. Por favor, inténtelo de nuevo más tarde.";
+                echo "Oops! Something went wrong. Please try again later.";
             }
 
             // Close statement
-            $stmt->close();
+            mysqli_stmt_close($stmt);
         }
     }
     
-
-    
     // Validate password
     if(empty(trim($_POST["password"]))){
-        $password_err = "Escribe la contraseña.";     
+        $password_err = "Please enter a password.";     
     } elseif(strlen(trim($_POST["password"])) < 6){
-        $password_err = "La contraseña debe tener al menos 6 carácteres.";
+        $password_err = "Password must have atleast 6 characters.";
     } else{
         $password = trim($_POST["password"]);
     }
     
     // Validate confirm password
     if(empty(trim($_POST["confirm_password"]))){
-        $confirm_password_err = "Confirma tu contraseña por favor";     
+        $confirm_password_err = "Please confirm password.";     
     } else{
         $confirm_password = trim($_POST["confirm_password"]);
         if(empty($password_err) && ($password != $confirm_password)){
-            $confirm_password_err = "Las contraseñas no coinciden";
+            $confirm_password_err = "Password did not match.";
         }
     }
 
-    // Validate tipo
-    if(empty(trim($_POST["tipo"]))){
-        $tipo_err = "Selecciona tu tipo de usuario(general, estudiante).";
-    } elseif(!preg_match('/^[a-zA-Z0-9_]+$/', trim($_POST["tipo"]))){
-        $tipo_err = "Tu tipo de usuario es general, estudiante.";
-    } else{
-        // Prepare a select statement
-        $sql = "SELECT id FROM users WHERE tipo = ?";
-        
-        if($stmt = $mysqli->prepare($sql)){
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_tipo);
-            
-            // Set parameters
-            $param_tipo = trim($_POST["tipo"]);
-            
-            // Attempt to execute the prepared statement
-            if($stmt->execute()){
-                // store result
-                $stmt->store_result();
-                
-                if($stmt->num_rows == 1){
-                    $tipo_err = "Error al elegir el tipo de usuario";
-                } else{
-                    $tipo = trim($_POST["tipo"]);
-                }
-            } else{
-                echo "Caracoles! Algo salió mal. Por favor, inténtelo de nuevo más tarde.";
-            }
-
-            // Close statement
-            $stmt->close();
-        }
+    if(empty(trim($_POST["confirm_password"]))){
+        $confirm_password_err = "Please confirm password.";     
     }
 
     // Validate telefono
@@ -169,39 +102,36 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             $stmt->close();
         }
     }
-    
-    
+
     // Check input errors before inserting in database
-    if(empty($username_err) && empty($password_err) && empty($confirm_password_err)){
+    if(empty($username_err) && empty($tipo_err) && empty($password_err) && empty($confirm_password_err) && empty($telefono_err) ){
         
         // Prepare an insert statement
-        $sql = "INSERT INTO users (username, password, tipo, telefono) VALUES (?, ?, ?, ?)";
-         
-        if($stmt = $mysqli->prepare($sql)){
+        $sql = "INSERT INTO users (username, tipo, password, telefono) VALUES (?, ?, ?, ?)";
+        if($stmt = mysqli_prepare($link, $sql)){
             // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("ssss", $param_username, $param_password, $param_tipo, $param_telefono);
+            mysqli_stmt_bind_param($stmt, "ssss", $param_username, $param_tipo, $param_password, $param_telefono);
             
             // Set parameters
             $param_username = $username;
+            $param_tipo = $tipo;
             $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
             $param_telefono = $telefono;
-            $param_tipo = $tipo;
-            
             // Attempt to execute the prepared statement
-            if($stmt->execute()){
+            if(mysqli_stmt_execute($stmt)){
                 // Redirect to login page
-                header("location: login.php");
+                header("location: index.php");
             } else{
                 echo "Oops! Something went wrong. Please try again later.";
             }
 
             // Close statement
-            $stmt->close();
+            mysqli_stmt_close($stmt);
         }
     }
     
     // Close connection
-    $mysqli->close();
+    mysqli_close($link);
 }
 ?>
  
@@ -209,7 +139,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sign Up</title>
+    <title>Zona de Registro</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body{ font: 14px sans-serif; }
@@ -218,11 +148,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 </head>
 <body>
     <div class="wrapper">
-        <h2>Registro</h2>
-        <p>Completa los siguientes campos </p>
+        <h2>Registrarte</h2>
+        <p>Por favor ingrese su informacón para crear una cuenta.</p>
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
             <div class="form-group">
-                <label>Usuario</label>
+                <label>Nombre de Usuario</label>
                 <input type="text" name="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
                 <span class="invalid-feedback"><?php echo $username_err; ?></span>
             </div>    
@@ -232,25 +162,27 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 <span class="invalid-feedback"><?php echo $password_err; ?></span>
             </div>
             <div class="form-group">
-                <label>Confirma la contraseña</label>
+                <label>Confirme su Contraseña</label>
                 <input type="password" name="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $confirm_password; ?>">
                 <span class="invalid-feedback"><?php echo $confirm_password_err; ?></span>
             </div>
             <div class="form-group">
-                <label>Tipo de Usuario</label>
-                <input type="text" name="tipo" class="form-control <?php echo (!empty($tipo_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $tipo; ?>">
-                <span class="invalid-feedback"><?php echo tipo_err; ?></span>
-            </div>    
-            <div class="form-group">
-                <label>Número telefónico</label>
+                <label>Telefono</label>
                 <input type="text" name="telefono" class="form-control <?php echo (!empty($telefono_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $telefono; ?>">
-                <span class="invalid-feedback"><?php echo $telefono_err; ?></span>
-            </div>    
-            <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Submit">
-                <input type="reset" class="btn btn-secondary ml-2" value="Reset">
+                <span class="invalid-feedback"><?php echo $telefono; ?></span>
             </div>
-            <p>¿Ya tienes una cuenta? <a href="login.php">Iniciar sesión </a></p>
+            <divc class="form-group">
+                <label>Tipo de usuario</label>
+                <input type="text" name="tipo" class="form-control <?php echo (!empty($tipo_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $tipo; ?>">
+                <span class="invalid-feedback"><?php echo $tipo_err; ?></span>
+            </divc>
+            
+            <br>
+            <div class="form-group">
+                <input type="submit" class="btn btn-primary" value="Crear Cuenta">
+                <input type="reset" class="btn btn-secondary ml-2" value="Limpiar">
+            </div>
+            <p>¿Ya tienes una cuenta? <a href="login.php">Ingrese Aquí</a>.</p>
         </form>
     </div>    
 </body>
